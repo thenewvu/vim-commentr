@@ -32,6 +32,7 @@ endfunction " 2}}}
 command -range -nargs=? Comment if mode() ==# 'n' | <line1>,<line2>call g:commentr#DoComment(<f-args>) | else | call g:commentr#DoComment(<f-args>) | endif
 command -nargs=? CommentMotion "g@"
 command Uncomment call g:commentr#DoUncomment()
+command ToggleComment if g:commentr#IsCommented() | <line1>,<line2>call g:commentr#DoUncomment() | else | <line1>,<line2>call g:commentr#DoComment() | endif
 
 " SECTION: Kepmaps {{{2
 nmap <silent> <expr> <Plug>(Comment)            commentr#Comment('')
@@ -41,7 +42,8 @@ call s:initVariable('g:commentr_margin', 0)
 call s:initVariable('g:commentr_padding', 1)
 call s:initVariable('g:commentr_align', '|$')
 call s:initVariable('g:commentr_no_mappings', 0)
-call s:initVariable('g:commentr_map_leader', { 'nv': '<Leader>c', 'i': '<C-\>c'})
+call s:initVariable('g:commentr_map_defaults', { 'comment': 'c', 'uncomment': 'u', 'toggle': 'x' })
+call s:initVariable('g:commentr_map_leader', { 'nv': '<Leader>c', 'i': '<C-\>c' })
 call s:initVariable('g:commentr_map_group', { '': '', 't': 't', 'd': 'd', 'm': 'm' })
 
 " function! g:YankLine(...)
@@ -88,7 +90,9 @@ if !g:commentr_no_mappings
 
     if exists('g:commentr_map_leader.n')
       exec "nmap <unique> <silent> <expr> " . g:commentr_map_leader.n . s:binding . " commentr#CommentMotion('" . s:com_type . "')"
-      exec "nmap <unique> <silent> " . g:commentr_map_leader.n . s:binding . "c  " . s:ccmd
+      if exists('g:commentr_map_defaults.comment')
+        exec "nmap <unique> <silent> " . g:commentr_map_leader.n . s:binding . g:commentr_map_defaults.comment . " " . s:ccmd
+      endif
       exec "nmap <unique> <silent> " . g:commentr_map_leader.n . s:binding . "A A" . s:ccmd
       exec "nmap <unique> <silent> " . g:commentr_map_leader.n . s:binding . "I I" . s:ccmd
       exec "nmap <unique> <silent> " . g:commentr_map_leader.n . s:binding . "o o" . s:ccmd
@@ -96,24 +100,44 @@ if !g:commentr_no_mappings
     endif
 
     if exists('g:commentr_map_leader.i')
+      if exists('g:commentr_map_defaults.comment')
+        exec "imap <unique> <silent> " . g:commentr_map_leader.i . s:binding . g:commentr_map_defaults.comment . " " . s:ccmd
+      endif
       exec "imap <unique> " . g:commentr_map_leader.i . s:binding . "i " . s:ccmd
     endif
 
     if exists('g:commentr_map_leader.v')
-      exec "vmap <unique> <silent> " . g:commentr_map_leader.v . s:binding . "c " . s:ccmd
+      if exists('g:commentr_map_defaults.comment')
+        exec "vmap <unique> <silent> " . g:commentr_map_leader.v . s:binding . g:commentr_map_defaults.comment . " " . s:ccmd
+      endif
     endif
   endfor
 
   if exists('g:commentr_map_leader.n')
-    exec "nmap <unique> <silent> " . g:commentr_map_leader.n . "u <Cmd>Uncomment<CR>"
+    if exists('g:commentr_map_defaults.uncomment')
+      exec "nmap <unique> <silent> " . g:commentr_map_leader.n . g:commentr_map_defaults.uncomment . " <Cmd>Uncomment<CR>"
+    endif
+    if exists('g:commentr_map_defaults.toggle')
+      exec "nmap <unique> <silent> " . g:commentr_map_leader.n . g:commentr_map_defaults.toggle    . " <Cmd>ToggleComment<CR>"
+    endif
   endif
 
   if exists('g:commentr_map_leader.i')
-    exec "imap <unique> <silent> " . g:commentr_map_leader.i . "u <Cmd>Uncomment<CR>"
+    if exists('g:commentr_map_defaults.uncomment')
+      exec "imap <unique> <silent> " . g:commentr_map_leader.i . g:commentr_map_defaults.uncomment . " <Cmd>Uncomment<CR>"
+    endif
+    if exists('g:commentr_map_defaults.toggle')
+      exec "imap <unique> <silent> " . g:commentr_map_leader.i . g:commentr_map_defaults.toggle    . " <Cmd>ToggleComment<CR>"
+    endif
   endif
 
   if exists('g:commentr_map_leader.v')
-    exec "vmap <unique> <silent> " . g:commentr_map_leader.v . "u <Cmd>Uncomment<CR>"
+    if exists('g:commentr_map_defaults.uncomment')
+      exec "vmap <unique> <silent> " . g:commentr_map_leader.v . g:commentr_map_defaults.uncomment . " <Cmd>Uncomment<CR>"
+    endif
+    if exists('g:commentr_map_defaults.toggle')
+      exec "vmap <unique> <silent> " . g:commentr_map_leader.v . g:commentr_map_defaults.toggle    . " <Cmd>ToggleComment<CR>"
+    endif
   endif
 
 end
@@ -125,4 +149,4 @@ unlet s:save_cpo
 let g:loaded_commentr = 1
 " 1}}}
 
-" vim: ts=2 sw=2 tw=72 et fdm=marker:
+" vim: ts=2 sw=2 tw=72 et fdm=marker

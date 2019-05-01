@@ -586,6 +586,12 @@ function! s:getFileTypePrefix(parts)
 endfunction " 3}}}
 
 " SECTION: Global functions {{{2
+
+function g:commentr#IsCommented(...) abort range
+  let [row, col] = (a:0 ># 0 ? a:1 : getcurpos()[1:2])
+  return synIDattr(synIDtrans(synID(row, col, 1)), "name") ==# 'Comment'
+endfunction
+
 " Commenting {{{3
 
 " Example:
@@ -615,7 +621,6 @@ function! g:commentr#DoComment(...) abort range
   " {{{4
   let group = get(a:, 1, '')
   silent! call repeat#set(":Comment " . escape(group, '\') . "\<CR>")
-
 
   let orig_cur_pos = getcurpos()[1:2]
   let real_ft = &ft
@@ -1014,10 +1019,12 @@ endfunction " 4}}}
 function g:commentr#DoUncomment() abort
   " {{{4
 
+  " Assume that file is well-commented.
+
   let mode = get(g:, 'commentr_mode_override', mode(1))
   unlet! g:commentr_mode_override
 
-  silent! call repeat#set(":Uncomment\<CR>")
+  " silent! call repeat#set(\\":Uncomment\<CR>\\")
 
   let [start_lnum, start_col, end_lnum, end_col, range_type] = s:compute_range(mode)
 
@@ -1026,8 +1033,6 @@ function g:commentr#DoUncomment() abort
   call cursor(start_lnum, start_col)
 
   let comment_regions = []
-
-  " we assume that file is well-aligned
 
   for comment in comments
 
@@ -1068,6 +1073,8 @@ function g:commentr#DoUncomment() abort
 
   endfor
   exe 'silent! ' . com_start[0] . 's/\C\V' . escape(b:commentr[com_name], '/') . '//Ie'
+
+  call assert(!g:commentr#IsCommented())
 
 endfunction " 4}}}
 
